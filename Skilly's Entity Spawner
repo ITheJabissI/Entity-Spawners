@@ -4,7 +4,7 @@ local Window = Library.CreateLib("Entity Spawner... Spawn any entity from each m
 
 local Tab = Window:NewTab("Original Entity Spawner")
 
-local Section = Tab:NewSection("?")
+local Section = Tab:NewSection("Don't work.")
 
 Section:NewButton("Rush", "Spawn Rush", function()
 
@@ -90,3 +90,35 @@ Section:NewButton("Ripper", "Torn Apart", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper2"))()  
 
 end)
+
+Section:NewButton("Rebound", "Torn Open", function()
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Reboundspawner3"))()  
+
+end)
+
+Section:NewButton("Shocker", "Experince Pain...", function()
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Shocker"))()  
+
+end)
+
+Section:NewButton("Frostbite", "Blizzardd", function()
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Frostbite"))()  
+
+end)
+
+Section:NewButton("Deer Lord", "Experince Suffers...", function()
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Deer%20sence2"))()  
+
+end)
+
+Section:NewButton("Cease", "HALT", function()
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Cease6"))()  
+
+end)
+
+Section:NewButton("Silence", "Shhh", function()
