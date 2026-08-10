@@ -6,8 +6,8 @@ local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 
 local entity = Spawner:Create({
 	Entity = {
-		Name = "Torment",
-		Asset = "https://github.com/eoyoustme/Fragmentend-Reiginited/blob/main/Torment.rbxm?raw=true",
+		Name = "Torment Redux",
+		Asset = "https://github.com/ITheJabissI/Entity-Spawners/blob/main/TormentRedux.rbxm?raw=true",
 		HeightOffset = 0.8
 	},
 	Lights = {
