@@ -1,0 +1,216 @@
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Hi There Welcome to my mod!!!!!!", true)
+
+local function GetGitSound(GithubSnd, SoundName)
+	local url = GithubSnd
+	if not isfile(SoundName .. ".mp3") then
+		writefile(SoundName .. ".mp3", game:HttpGet(url))
+	end
+	local sound = Instance.new("Sound")
+	sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+	return sound
+end
+local Ambience = GetGitSound("https://github.com/eoyoustme/Extremely/blob/main/Ambience.mp3?raw=true","Ambience")
+Ambience.Parent = workspace
+Ambience.Volume = 2
+Ambience.Looped = true
+Ambience.PlaybackSpeed = 1
+Ambience:Play()
+
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Play A Light in the Darkness of Destruction X0.8 Speed", true)
+
+coroutine.wrap(function()
+	while true do
+		wait(0.0005)
+		workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value].Door.Door.Open.SoundId = "rbxassetid://833871080"
+		workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:FindFirstChild("Door"):FindFirstChild("Door").Material = "Rock"
+		workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:FindFirstChild("Door"):FindFirstChild("Door"):FindFirstChild("Sign").Material = "Rock"
+	end
+end)()
+
+coroutine.wrap(function()
+	while true do
+		task.wait(0.05)
+
+		local room = workspace.CurrentRooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value)
+		if room then
+			for _, obj in ipairs(room:GetDescendants()) do
+				if obj.Name == "DoorNormal" then
+					local door = obj:FindFirstChild("Door")
+					if door then
+						local open = door:FindFirstChild("Open")
+						if open and open:IsA("Sound") then
+							open.SoundId = "rbxassetid://833871080"
+						end
+					end
+				end
+			end
+		end
+	end
+end)()
+
+local function EditPart(obj)
+	if obj:IsA("Part") or obj:IsA("MeshPart") then
+		obj.Color = Color3.fromRGB(70, 70, 70)
+		obj.Material = Enum.Material.Rock
+	end
+end
+
+for _, obj in ipairs(workspace:GetDescendants()) do
+	EditPart(obj)
+end
+
+workspace.DescendantAdded:Connect(EditPart)
+
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+
+Ambience:Destroy()
+
+local function GetGitSound(GithubSnd, SoundName)
+	local url = GithubSnd
+	if not isfile(SoundName .. ".mp3") then
+		writefile(SoundName .. ".mp3", game:HttpGet(url))
+	end
+	local sound = Instance.new("Sound")
+	sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+	return sound
+end
+local Ambience5 = GetGitSound("https://github.com/eoyoustme/Fragmentend-Reiginited/blob/main/FragmentedHotel.mp3?raw=true","FragmentedHotel")
+Ambience5.Parent = workspace
+Ambience5.Volume = 4
+Ambience5.Looped = false
+Ambience5.PlaybackSpeed = 1
+Ambience5:Play()
+
+local Lighting = game:GetService("Lighting")
+Lighting.Ambient = Color3.new(0, 0, 0)
+Lighting.Brightness = 0.1
+Lighting.FogEnd = 60
+Lighting.FogStart = 45
+Lighting.FogColor = Color3.new(0.0745098, 0.0745098, 0.223529)
+
+local cue2 = Instance.new("Sound")
+cue2.Parent = game.Workspace
+cue2.Name = "Spawn"
+cue2.SoundId = "rbxassetid://9113731836"
+cue2.Volume = 3
+cue2.PlaybackSpeed = 1
+cue2.Looped = true
+cue2:Play()
+
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Fragmentend Reginited mode has Activated (alpha)", true)
+wait(2)
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Credit to The Jabiss (orgin Fragmented) And Nhankg And OG Hunger (new) me:D", true)
+
+pcall(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/Fragmentend-Reiginited/refs/heads/main/Stamina"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/ohh/refs/heads/main/Intro"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/Fragmentend-Reiginited/refs/heads/main/Insanity"))()
+end)
+
+local entityList = {
+	{
+		name = "Struggle",
+		url = "https://raw.githubusercontent.com/ITheJabissI/Entity-Spawners/refs/heads/main/revstrygr",
+		chance = math.random(5,8)
+	},
+	{
+		name = "Revoker",
+		url = "https://raw.githubusercontent.com/ITheJabissI/Entity-Spawners/refs/heads/main/reduxedrock",
+		chance = math.random(7.5, 9)
+	},
+	{
+		name = "Hungered",
+		url = "https://raw.githubusercontent.com/ITheJabissI/Entity-Spawners/refs/heads/main/ered",
+		chance = math.random(1,1.5)
+	},
+	{
+		name = "Daze",
+		url = "https://raw.githubusercontent.com/ITheJabissI/Entity-Spawners/refs/heads/main/YareYareDaze",
+		chance = math.random(12.5,15)
+	},
+	{
+		name = "Fluster",
+		url = "https://raw.githubusercontent.com/ITheJabissI/Entity-Spawners/refs/heads/main/fluter",
+		chance = math.random(2,3)
+	},
+	{
+		name = "Torment",
+		url = "https://raw.githubusercontent.com/ITheJabissI/Entity-Spawners/refs/heads/main/ReduxxedTorment",
+		chance = math.random(0.5,3.8)
+	},
+  {
+		name = "Hallucatine",
+		url = "https://raw.githubusercontent.com/ITheJabissI/Entity-Spawners/refs/heads/main/what%20is%20that%20on%20my",
+		chance = math.random(12,7)
+	},
+  {
+		name = "Predator",
+		url = "https://raw.githubusercontent.com/ITheJabissI/Entity-Spawners/refs/heads/main/pred",
+		chance = math.random(6,7)
+	},
+}
+
+local function rollChance(percent)
+	return math.random(1, 100) <= percent
+end
+
+local function spawnEntity(entityData)
+	pcall(function()
+		loadstring(game:HttpGet(entityData.url))()
+	end)
+end
+
+local function IsSeekActive()
+	local currentRooms = game.Workspace:FindFirstChild("CurrentRooms")
+	if not currentRooms then
+		return false
+	end
+
+	local namesToCheck = {
+		"Seek",
+		"SeekMoving",
+		"SeekMovingNewClone",
+		"SeekEntity",
+		"SeekDoor"
+	}
+
+	for _, name in ipairs(namesToCheck) do
+		if game.Workspace:FindFirstChild(name, true) then
+			return true
+		end
+		if currentRooms:FindFirstChild(name, true) then
+			return true
+		end
+	end
+
+	for _, inst in ipairs(game.Workspace:GetDescendants()) do
+		local n = string.lower(inst.Name)
+		if string.find(n, "seek") then
+			return true
+		end
+	end
+
+	return false
+end
+
+math.randomseed(os.clock() * 1e6)
+
+while true do
+	task.wait(Random.new():NextNumber(10,14))
+
+	if not IsSeekActive() then
+		local threads = {}
+
+		for _, entityData in ipairs(entityList) do
+			if rollChance(entityData.chance) then
+				table.insert(threads, entityData)
+			end
+		end
+
+		for _, entityData in ipairs(threads) do
+			task.spawn(function()
+				spawnEntity(entityData)
+			end)
+		end
+	end
+end
