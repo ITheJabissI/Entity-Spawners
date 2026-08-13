@@ -60,35 +60,19 @@ local entity = Spawner:Create({
 
 entity:SetCallback("OnSpawned", function()
 	print("Entity has spawned")
-  local player = game.Players.LocalPlayer
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "RunningMessage"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+    local Main_Game = require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
 
-local text = Instance.new("TextLabel")
-text.Name = "Message"
+    Main_Game.caption("Something stops you from running...", true)
 
--- Bottom center
-text.AnchorPoint = Vector2.new(0.5, 1)
-text.Position = UDim2.new(0.5, 0, 0.92, 0)
-text.Size = UDim2.new(0, 460, 0, 45)
+    for _, v in ipairs(game.Players.LocalPlayer.PlayerGui.MainUI:GetDescendants()) do
+    if v:IsA("TextLabel") and v.Text == "Something stops you from running..." then
+        v.Font = Enum.Font.SciFi
+        v.TextSize = 18
+        v.TextTransparency = 0
+    end
+end
 
-text.BackgroundTransparency = 1
-text.Text = "Something stops you from running..."
-text.TextColor3 = Color3.fromRGB(210, 220, 240)
-text.TextTransparency = 0
-text.TextScaled = true
-text.Font = Enum.Font.SciFi
-
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(120, 140, 180)
-stroke.Thickness = 0.5
-stroke.Transparency = 0.45
-stroke.Parent = text
-
-text.Parent = gui
 
 	local function GetGitSound(GithubSnd, SoundName)
 		local url = GithubSnd
