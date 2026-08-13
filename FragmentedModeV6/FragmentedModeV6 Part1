@@ -1,0 +1,89 @@
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Made by The Jabiss. dont share the script on any site, link, app or server", true)
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+
+pcall(function()
+    loadstring(game:HttpGet("https://pastefy.app/EpqLU3vm/raw"))()
+end)
+
+local entityList = {
+	{
+		name = "Dread",
+		url = "https://github.com/ITheJabissI/Entity-Spawners/raw/main/FragmentedModeV6/DreadEntity",
+		chance = math.random(20,40)
+	},
+	{
+		name = "Torment",
+		url = "https://github.com/ITheJabissI/Entity-Spawners/raw/main/FragmentedModeV6/TormentV6",
+		chance = math.random(7.5, 9)
+	},
+	{
+		name = "Fluster",
+		url = "https://github.com/ITheJabissI/Entity-Spawners/raw/main/FragmentedModeV6/Flust",
+		chance = math.random(1,1.5)
+	}
+}
+
+local function rollChance(percent)
+	return math.random(1, 100) <= percent
+end
+
+local function spawnEntity(entityData)
+	pcall(function()
+		loadstring(game:HttpGet(entityData.url))()
+	end)
+end
+
+local function IsSeekActive()
+	local currentRooms = game.Workspace:FindFirstChild("CurrentRooms")
+	if not currentRooms then
+		return false
+	end
+
+	local namesToCheck = {
+		"Seek",
+		"SeekMoving",
+		"SeekMovingNewClone",
+		"SeekEntity",
+		"SeekDoor"
+	}
+
+	for _, name in ipairs(namesToCheck) do
+		if game.Workspace:FindFirstChild(name, true) then
+			return true
+		end
+		if currentRooms:FindFirstChild(name, true) then
+			return true
+		end
+	end
+
+	for _, inst in ipairs(game.Workspace:GetDescendants()) do
+		local n = string.lower(inst.Name)
+		if string.find(n, "seek") then
+			return true
+		end
+	end
+
+	return false
+end
+
+math.randomseed(os.clock() * 1e6)
+
+while true do
+	task.wait(Random.new():NextNumber(10,14))
+
+	if not IsSeekActive() then
+		local threads = {}
+
+		for _, entityData in ipairs(entityList) do
+			if rollChance(entityData.chance) then
+				table.insert(threads, entityData)
+			end
+		end
+
+		for _, entityData in ipairs(threads) do
+			task.spawn(function()
+				spawnEntity(entityData)
+			end)
+		end
+	end
+end
