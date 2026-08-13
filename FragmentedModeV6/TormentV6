@@ -436,8 +436,8 @@ local entity = Spawner:Create({
 
 	Entity = {
 		Name = "Torment",
-		Asset = "rbxassetid://14306460598",
-		HeightOffset = 0.7
+		Asset = "https://github.com/ITheJabissI/Entity-Spawners/raw/main/FragmentedModeV6/eye.rbxm",
+		HeightOffset = 2
 	},
 
 	Lights = {
