@@ -609,23 +609,19 @@ entity:SetCallback("OnDespawning", function()
 		end
 	end
 
-	-- Achievement giver
-	local Success, AchievementGiver = pcall(function()
-		return loadstring(game:HttpGet(
-			"https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"
-		))()
-	end)
+	local achievementGiver = loadstring(game:HttpGet(
+		"https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"
+	))()
 
-	if Success and AchievementGiver then
-		pcall(function()
-			AchievementGiver({
-				Title = "Stalking Game",
-				Desc = "Im watching you...",
-				Reason = "Encounter Torment",
-				Image = "rbxassetid://101914212937"
-			})
-		end)
-	else
+	achievementGiver({
+		Title = "Stalking Game",
+		Desc = "Im watching you...",
+		Reason = "Encounter Torment",
+
+		-- Your GitHub image
+		Image = "https://github.com/ITheJabissI/Entity-Spawners/raw/main/FragmentedModeV6/2026_08_13_000_Kleki.png"
+	})
+end)
 		warn("Failed to load achievement giver")
 	end
 end)
