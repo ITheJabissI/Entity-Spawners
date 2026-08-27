@@ -25,7 +25,7 @@ local ENTITY_NAME = "Rush"
 local SPEED = 70
 
 -- Movement offset from each node
-local MOVEMENT_OFFSET = Vector3.new(0, 2, 0)
+local MOVEMENT_OFFSET = Vector3.new(0, 4, 0)
 
 --==============================================================
 -- SPAWN SETTINGS
@@ -37,7 +37,7 @@ local SPAWN_IN_FRONT = false
 local SPAWN_ROOMS_DISTANCE = 10
 
 -- Extra position offset when spawning
-local SPAWN_OFFSET = Vector3.new(0, 2, 0)
+local SPAWN_OFFSET = Vector3.new(0, 4, 0)
 
 --==============================================================
 -- MOVEMENT SETTINGS
