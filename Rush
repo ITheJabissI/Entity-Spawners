@@ -68,7 +68,7 @@ local DAMAGE_AMOUNT = 0
 local RED_LIGHTS = false
 
 local FLICKER_LIGHTS = true
-local FLICKER_DURATION = 4
+local FLICKER_DURATION = 1
 local FLICKER_SPEED = 0.06
 
 --==============================================================
