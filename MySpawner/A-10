@@ -238,8 +238,7 @@ end)
 
 SetCallback("OnDamagePlayer", function(newHealth)
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/MatcherJumpscare.txt"))()
-     game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Matcher"
+     game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "A-10"
 
 	print(
 		"[ENTITY] Player damage callback:",
