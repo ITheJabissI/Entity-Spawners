@@ -1,0 +1,53 @@
+local P=game:GetService("Players")
+local R=game:GetService("ReplicatedStorage")
+local T=game:GetService("TweenService")
+local p=P.LocalPlayer
+
+local g=game:GetObjects("rbxassetid://134996330348812")[1]
+if not g then return end
+g=g:IsA("Model") and g or g:FindFirstChildWhichIsA("Model",true)
+if not g then return end
+g.Name="Eye";g.Parent=workspace
+
+local A=g:FindFirstChild("Attachment",true)
+if A then
+	for _,v in A:GetChildren() do
+		if v:IsA("ParticleEmitter") then
+			v.Color=ColorSequence.new(Color3.new(.9,.9,.9))
+			v.LightInfluence=0;v.LightEmission=0
+		end
+	end
+end
+
+local e=g:FindFirstChild("Effects")
+local l=e and e:FindFirstChild("PointLight")
+if e and e:FindFirstChild("PointLight2") then e.PointLight2:Destroy() end
+if l then l.Range=0;T:Create(l,TweenInfo.new(3),{Range=20}):Play() end
+
+local x=g:FindFirstChildWhichIsA("BasePart",true)
+if not x then return end
+
+task.wait(1)
+local rs=workspace.CurrentRooms:GetChildren()
+local f=rs[#rs-1].Parts:FindFirstChild("Floor")
+if f then x.CFrame=f.CFrame+Vector3.new(0,6,0) end
+
+local on=true
+task.spawn(function()
+	while on do
+		task.wait(.05)
+		local h=p.Character and p.Character:FindFirstChild("Humanoid")
+		local c=workspace.CurrentCamera
+		if h and c and c.CFrame.LookVector:Dot((x.Position-c.CFrame.Position).Unit)>.5 then
+			h:TakeDamage(.2)
+			if h.Health<=0 then
+				firesignal(R.RemotesFolder.DeathHint.OnClientEvent,{"You died to who you call Eye...","He spawns in the center and damages you if you look at him"},"Blue")
+				R.GameStats["Player_"..p.Name].Total.DeathCause.Value="Eye"
+			end
+		end
+	end
+end)
+
+R.GameData.LatestRoom.Changed:Connect(function()
+	on=false;g:Destroy()
+end)
