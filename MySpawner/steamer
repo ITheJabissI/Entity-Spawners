@@ -1,0 +1,2011 @@
+--==============================================================
+-- ENTITY NODE MOVING SCRIPT
+-- NO CHUNKS
+-- SPAWN OFFSET
+-- RBXASSETID / GITHUB RBXM
+-- CALLBACK SYSTEM
+-- REBOUND SUPPORT
+--==============================================================
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local InsertService = game:GetService("InsertService")
+
+--==============================================================
+-- SETTINGS
+--==============================================================
+
+local ENTITY_ASSET = "rbxassetid://73980254528900"
+local ENTITY_NAME = "Steamhappy"
+
+local SPEED = 90
+
+-- Movement offset from each node
+local MOVEMENT_OFFSET = Vector3.new(0, 3, 0)
+
+--==============================================================
+-- SPAWN SETTINGS
+--==============================================================
+
+local SPAWN_IN_FRONT = false
+
+-- How many rooms away to spawn
+local SPAWN_ROOMS_DISTANCE = 10
+
+-- Extra position offset when spawning
+local SPAWN_OFFSET = Vector3.new(0, 3, 0)
+
+--==============================================================
+-- MOVEMENT SETTINGS
+--==============================================================
+
+local ENTITY_WAIT_TIME = 4
+local STOP_DISTANCE = 0
+
+--==============================================================
+-- REBOUND SETTINGS
+--==============================================================
+
+local REBOUNDS = 0
+local REBOUND_DELAY = 0.25
+
+--==============================================================
+-- DAMAGE SETTINGS
+--==============================================================
+
+local KILL_DISTANCE = 0
+local KILL_DELAY = 1.7
+local DAMAGE_AMOUNT = 0
+
+--==============================================================
+-- LIGHT SETTINGS
+--==============================================================
+
+local RED_LIGHTS = false
+
+local FLICKER_LIGHTS = true
+local FLICKER_DURATION = 1
+local FLICKER_SPEED = 0.06
+
+--==============================================================
+-- CAMERA SHAKE
+--==============================================================
+
+local CAMERA_SHAKE_ENABLED = true
+local CAMERA_SHAKE_DISTANCE = 100
+local CAMERA_SHAKE_MAGNITUDE = 4
+local CAMERA_SHAKE_ROUGHNESS = 5
+local CAMERA_SHAKE_FADE_IN = 0
+local CAMERA_SHAKE_FADE_OUT = 0.35
+local CAMERA_SHAKE_INTERVAL = 0.12
+
+--==============================================================
+-- JUMPSCARE
+--==============================================================
+
+local JUMPSCARE_ENABLED = false
+
+local JUMPSCARE_SOUND =
+	"rbxassetid://116282238939992"
+
+local JUMPSCARE_FACE =
+	"rbxassetid://117695355916005"
+
+local JUMPSCARE_BACKGROUND =
+	"rbxassetid://1712510813"
+
+--==============================================================
+-- PLAYER
+--==============================================================
+
+local Player = Players.LocalPlayer
+
+if not Player then
+	warn("[ENTITY] LocalPlayer not found.")
+	return
+end
+
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local Character =
+	Player.Character
+	or Player.CharacterAdded:Wait()
+
+local HRP =
+	Character:WaitForChild("HumanoidRootPart")
+
+--==============================================================
+-- CALLBACK SYSTEM
+--==============================================================
+
+local Callbacks = {}
+
+local function SetCallback(name, callback)
+
+	if typeof(name) ~= "string" then
+		warn("[ENTITY] Callback name must be a string.")
+		return
+	end
+
+	if typeof(callback) ~= "function" then
+		warn("[ENTITY] Callback must be a function.")
+		return
+	end
+
+	Callbacks[name] = callback
+
+end
+
+local function FireCallback(name, ...)
+
+	local callback = Callbacks[name]
+
+	if not callback then
+		return
+	end
+
+	local success, err =
+		pcall(callback, ...)
+
+	if not success then
+		warn(
+			"[ENTITY] Callback error [" ..
+				name ..
+				"]:",
+			err
+		)
+	end
+
+end
+
+--==============================================================
+-- STATE
+--==============================================================
+
+local Figure = nil
+
+local JumpscareTriggered = false
+local KillTriggered = false
+
+local StartedMoving = false
+local Despawning = false
+local Despawned = false
+
+local LastRoom = nil
+local LastLookAt = nil
+
+--==============================================================
+-- CALLBACKS
+--==============================================================
+
+SetCallback("OnSpawned", function(entity)
+
+	print("[ENTITY] Entity has spawned.")
+	
+end)
+
+SetCallback("OnStartMoving", function(entity)
+
+	print("[ENTITY] Entity has started moving.")
+
+end)
+
+SetCallback("OnEnterRoom", function(room, firstTime)
+
+	if room then
+		print(
+			"[ENTITY] Entered room:",
+			room.Name,
+			"FirstTime:",
+			firstTime
+		)
+	end
+
+end)
+
+SetCallback("OnLookAt", function(lineOfSight)
+
+	if lineOfSight then
+		print("[ENTITY] Player is looking at entity.")
+	else
+		print("[ENTITY] Player view is obstructed.")
+	end
+
+end)
+
+SetCallback("OnRebounding", function(startOfRebound)
+
+	if startOfRebound then
+		print("[ENTITY] Rebound started.")
+	else
+		print("[ENTITY] Rebound finished.")
+	end
+
+end)
+
+SetCallback("OnDespawning", function(entity)
+
+	print("[ENTITY] Entity is despawning.")
+end)
+
+SetCallback("OnDespawned", function(entity)
+
+	print("[ENTITY] Entity has despawned.")
+	wait(7)
+	Figure:Destroy()
+
+end)
+
+SetCallback("OnDamagePlayer", function(newHealth)
+
+
+     game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Steamhappy"
+
+	print(
+		"[ENTITY] Player damage callback:",
+		newHealth
+	)
+
+end)
+
+--==============================================================
+-- ENTITY LOADER
+--==============================================================
+
+local function loadRobloxAsset(assetId)
+
+	print("[ENTITY] Loading Roblox asset:")
+	print(assetId)
+
+	--==========================================================
+	-- METHOD 1: GetObjects
+	--==========================================================
+
+	local success, objects =
+		pcall(function()
+
+			return game:GetObjects(assetId)
+
+		end)
+
+	if success
+		and objects
+		and #objects > 0 then
+
+		print(
+			"[ENTITY] GetObjects loaded:",
+			#objects,
+			"objects."
+		)
+
+		local model = nil
+
+		for _, object in ipairs(objects) do
+
+			if object:IsA("Model") then
+				model = object
+				break
+			end
+
+		end
+
+		if model then
+			return model
+		end
+
+		return objects[1]
+
+	end
+
+	warn(
+		"[ENTITY] GetObjects failed:",
+		objects
+	)
+
+	--==========================================================
+	-- METHOD 2: InsertService
+	--==========================================================
+
+	local assetNumber =
+		string.match(
+			assetId,
+			"(%d+)"
+		)
+
+	if not assetNumber then
+
+		warn(
+			"[ENTITY] Could not extract asset ID."
+		)
+
+		return nil
+
+	end
+
+	local assetIdNumber =
+		tonumber(assetNumber)
+
+	if not assetIdNumber then
+		return nil
+	end
+
+	local insertSuccess, container =
+		pcall(function()
+
+			return InsertService:LoadAsset(
+				assetIdNumber
+			)
+
+		end)
+
+	if insertSuccess
+		and container then
+
+		print(
+			"[ENTITY] InsertService loaded asset."
+		)
+
+		local model = nil
+
+		for _, object in ipairs(
+			container:GetChildren()
+		) do
+
+			if object:IsA("Model") then
+				model = object
+				break
+			end
+
+		end
+
+		if model then
+
+			model.Parent = Workspace
+
+			return model
+
+		end
+
+		local first =
+			container:GetChildren()[1]
+
+		if first then
+
+			first.Parent = Workspace
+
+			return first
+
+		end
+
+	end
+
+	warn(
+		"[ENTITY] InsertService also failed:",
+		container
+	)
+
+	return nil
+
+end
+
+--==============================================================
+-- GITHUB RBXM LOADER
+--==============================================================
+
+local function loadGitHubRBXM(url)
+
+	print("[ENTITY] Downloading RBXM:")
+	print(url)
+
+	local success, data =
+		pcall(function()
+
+			return game:HttpGet(url)
+
+		end)
+
+	if not success then
+
+		warn(
+			"[ENTITY] GitHub download failed:",
+			data
+		)
+
+		return nil
+
+	end
+
+	if not data
+		or #data == 0 then
+
+		warn(
+			"[ENTITY] GitHub returned empty data."
+		)
+
+		return nil
+
+	end
+
+	print(
+		"[ENTITY] RBXM downloaded:",
+		#data,
+		"bytes"
+	)
+
+	--==========================================================
+	-- SerializationService
+	--==========================================================
+
+	local SerializationService =
+		game:GetService(
+			"SerializationService"
+		)
+
+	if not SerializationService then
+
+		warn(
+			"[ENTITY] SerializationService unavailable."
+		)
+
+		return nil
+
+	end
+
+	local bufferSuccess, bufferData =
+		pcall(function()
+
+			return buffer.fromstring(data)
+
+		end)
+
+	if not bufferSuccess then
+
+		warn(
+			"[ENTITY] Buffer conversion failed:",
+			bufferData
+		)
+
+		return nil
+
+	end
+
+	local deserializeSuccess, objects =
+		pcall(function()
+
+			return SerializationService:
+				DeserializeInstancesAsync(
+					bufferData
+				)
+
+		end)
+
+	if not deserializeSuccess then
+
+		warn(
+			"[ENTITY] RBXM deserialization failed:",
+			objects
+		)
+
+		return nil
+
+	end
+
+	if not objects
+		or #objects == 0 then
+
+		warn(
+			"[ENTITY] RBXM contained no objects."
+		)
+
+		return nil
+
+	end
+
+	for _, object in ipairs(objects) do
+
+		if object:IsA("Model") then
+			return object
+		end
+
+	end
+
+	return objects[1]
+
+end
+
+--==============================================================
+-- UNIVERSAL LOADER
+--==============================================================
+
+local function LoadEntity(asset)
+
+	if not asset then
+		return nil
+	end
+
+	if string.match(
+		asset,
+		"^rbxassetid://"
+	) then
+
+		return loadRobloxAsset(asset)
+
+	end
+
+	if string.match(
+		asset,
+		"^https://"
+	)
+	or string.match(
+		asset,
+		"^http://"
+	) then
+
+		return loadGitHubRBXM(asset)
+
+	end
+
+	warn(
+		"[ENTITY] Unsupported asset:",
+		asset
+	)
+
+	return nil
+
+end
+
+--==============================================================
+-- LOAD ENTITY
+--==============================================================
+
+print("========================================")
+print("[ENTITY] LOADING ENTITY")
+print("========================================")
+
+Figure =
+	LoadEntity(
+		ENTITY_ASSET
+	)
+
+if not Figure then
+
+	warn("========================================")
+	warn("[ENTITY] ENTITY FAILED TO LOAD")
+	warn("Asset:", ENTITY_ASSET)
+	warn("========================================")
+
+	return
+
+end
+
+--==============================================================
+-- PARENT ENTITY
+--==============================================================
+
+Figure.Name =
+	ENTITY_NAME
+
+Figure.Parent =
+	Workspace
+
+print(
+	"[ENTITY] Model inserted:",
+	Figure:GetFullName()
+)
+
+--==============================================================
+-- FIND PRIMARY PART
+--==============================================================
+
+local PrimaryPart =
+	Figure.PrimaryPart
+
+	or Figure:FindFirstChild(
+		"HumanoidRootPart",
+		true
+	)
+
+	or Figure:FindFirstChild(
+		"Ripe",
+		true
+	)
+
+	or Figure:FindFirstChildWhichIsA(
+		"BasePart",
+		true
+	)
+
+if not PrimaryPart then
+
+	warn(
+		"[ENTITY] ENTITY HAS NO BASEPART."
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+Figure.PrimaryPart =
+	PrimaryPart
+
+print(
+	"[ENTITY] PrimaryPart:",
+	PrimaryPart:GetFullName()
+)
+
+--==============================================================
+-- ANCHOR ENTITY
+--==============================================================
+
+for _, part in ipairs(
+	Figure:GetDescendants()
+) do
+
+	if part:IsA("BasePart") then
+
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanTouch = false
+		part.CanQuery = false
+	end
+
+end
+
+--==============================================================
+-- CURRENT ROOMS
+--==============================================================
+
+local RoomsFolder =
+	Workspace:FindFirstChild(
+		"CurrentRooms"
+	)
+
+if not RoomsFolder then
+
+	warn(
+		"[ENTITY] CurrentRooms not found."
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+--==============================================================
+-- GAME DATA
+--==============================================================
+
+local GameData =
+	ReplicatedStorage:FindFirstChild(
+		"GameData"
+	)
+
+if not GameData then
+
+	warn(
+		"[ENTITY] GameData not found."
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+local LatestRoom =
+	GameData:FindFirstChild(
+		"LatestRoom"
+	)
+
+if not LatestRoom then
+
+	warn(
+		"[ENTITY] LatestRoom not found."
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+--==============================================================
+-- GET NUMBERED ROOMS
+--==============================================================
+
+local function GetRooms()
+
+	local rooms = {}
+
+	for _, room in ipairs(
+		RoomsFolder:GetChildren()
+	) do
+
+		local number =
+			tonumber(room.Name)
+
+		if number then
+
+			table.insert(
+				rooms,
+				room
+			)
+
+		end
+
+	end
+
+	table.sort(
+		rooms,
+		function(a, b)
+
+			return tonumber(a.Name)
+				<
+				tonumber(b.Name)
+
+		end
+	)
+
+	return rooms
+
+end
+
+local Rooms =
+	GetRooms()
+
+if #Rooms == 0 then
+
+	warn(
+		"[ENTITY] No numbered rooms found."
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+--==============================================================
+-- CURRENT ROOM
+--==============================================================
+
+local CurrentRoomNumber =
+	tonumber(
+		LatestRoom.Value
+	)
+
+if not CurrentRoomNumber then
+
+	warn(
+		"[ENTITY] Invalid LatestRoom:",
+		LatestRoom.Value
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+local CurrentIndex = nil
+
+for index, room in ipairs(Rooms) do
+
+	if tonumber(room.Name)
+		==
+		CurrentRoomNumber then
+
+		CurrentIndex = index
+
+		break
+
+	end
+
+end
+
+if not CurrentIndex then
+
+	warn(
+		"[ENTITY] Current room is not loaded:",
+		CurrentRoomNumber
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+local CurrentRoom =
+	Rooms[CurrentIndex]
+
+print(
+	"[ENTITY] Current room:",
+	CurrentRoom.Name
+)
+
+--==============================================================
+-- GET NODES
+--==============================================================
+
+local function GetNodes(room)
+
+	if not room then
+		return {}
+	end
+
+	local NodesFolder =
+		room:FindFirstChild(
+			"Nodes"
+		)
+
+	if not NodesFolder then
+		return {}
+	end
+
+	local nodes = {}
+
+	for _, node in ipairs(
+		NodesFolder:GetChildren()
+	) do
+
+		if node:IsA("BasePart") then
+
+			table.insert(
+				nodes,
+				node
+			)
+
+		end
+
+	end
+
+	table.sort(
+		nodes,
+		function(a, b)
+
+			local A =
+				tonumber(a.Name)
+
+			local B =
+				tonumber(b.Name)
+
+			if A and B then
+				return A < B
+			end
+
+			if A then
+				return true
+			end
+
+			if B then
+				return false
+			end
+
+			return a.Name < b.Name
+
+		end
+	)
+
+	return nodes
+
+end
+
+--==============================================================
+-- CALCULATE SPAWN ROOM
+--==============================================================
+
+local SpawnIndex
+
+if SPAWN_IN_FRONT then
+
+	SpawnIndex =
+		math.min(
+			#Rooms,
+			CurrentIndex
+				+
+				SPAWN_ROOMS_DISTANCE
+		)
+
+else
+
+	SpawnIndex =
+		math.max(
+			1,
+			CurrentIndex
+				-
+				SPAWN_ROOMS_DISTANCE
+		)
+
+end
+
+local SpawnRoom =
+	Rooms[SpawnIndex]
+
+if not SpawnRoom then
+
+	warn(
+		"[ENTITY] Spawn room does not exist."
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+print(
+	"[ENTITY] Spawn room:",
+	SpawnRoom.Name
+)
+
+--==============================================================
+-- FIND SPAWN LOCATION
+--==============================================================
+
+local function GetSpawnPart(room)
+
+	local nodes =
+		GetNodes(room)
+
+	if #nodes > 0 then
+
+		if SPAWN_IN_FRONT then
+			return nodes[#nodes]
+		else
+			return nodes[1]
+		end
+
+	end
+
+	local RoomExit =
+		room:FindFirstChild(
+			"RoomExit",
+			true
+		)
+
+	if RoomExit
+		and RoomExit:IsA("BasePart") then
+
+		return RoomExit
+
+	end
+
+	local BasePart =
+		room:FindFirstChildWhichIsA(
+			"BasePart",
+			true
+		)
+
+	return BasePart
+
+end
+
+local SpawnPart =
+	GetSpawnPart(
+		SpawnRoom
+	)
+
+if not SpawnPart then
+
+	warn(
+		"[ENTITY] NO SPAWN PART FOUND IN ROOM:",
+		SpawnRoom.Name
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+print(
+	"[ENTITY] Spawn part:",
+	SpawnPart.Name
+)
+
+--==============================================================
+-- SPAWN ENTITY
+--==============================================================
+
+local SpawnCFrame =
+	SpawnPart.CFrame
+	*
+	CFrame.new(
+		SPAWN_OFFSET
+	)
+
+local success, errorMessage =
+	pcall(function()
+
+		Figure:PivotTo(
+			SpawnCFrame
+		)
+
+	end)
+
+if not success then
+
+	warn(
+		"[ENTITY] PivotTo failed:",
+		errorMessage
+	)
+
+	Figure:Destroy()
+
+	return
+
+end
+
+print("========================================")
+print("[ENTITY] ENTITY SPAWNED")
+print("Name:", ENTITY_NAME)
+print("Room:", SpawnRoom.Name)
+print("Part:", SpawnPart.Name)
+print(
+	"Position:",
+	Figure:GetPivot().Position
+)
+print("Spawn Offset:", SPAWN_OFFSET)
+print("========================================")
+
+FireCallback(
+	"OnSpawned",
+	Figure
+)
+
+--==============================================================
+-- CAMERA SHAKE
+--==============================================================
+
+local CamShake = nil
+
+local CameraShakeModule =
+	ReplicatedStorage:FindFirstChild(
+		"CameraShaker"
+	)
+
+if CameraShakeModule then
+
+	local success, module =
+		pcall(function()
+
+			return require(
+				CameraShakeModule
+			)
+
+		end)
+
+	if success and module then
+
+		local shakerSuccess, shaker =
+			pcall(function()
+
+				return module.new(
+					Enum.RenderPriority.Camera.Value,
+
+					function(shakeCf)
+
+						local Camera =
+							Workspace.CurrentCamera
+
+						if Camera then
+
+							Camera.CFrame =
+								Camera.CFrame
+								*
+								shakeCf
+
+						end
+
+					end
+				)
+
+			end)
+
+		if shakerSuccess
+			and shaker then
+
+			CamShake =
+				shaker
+
+			pcall(function()
+				CamShake:Start()
+			end)
+
+		end
+
+	end
+
+end
+
+--==============================================================
+-- CAMERA SHAKE LOOP
+--==============================================================
+
+task.spawn(function()
+
+	while Figure
+		and Figure.Parent do
+
+		if CAMERA_SHAKE_ENABLED
+			and CamShake
+			and HRP
+			and HRP.Parent then
+
+			local distance =
+				(
+					Figure:GetPivot().Position
+					-
+					HRP.Position
+				).Magnitude
+
+			if distance
+				<= CAMERA_SHAKE_DISTANCE then
+
+				pcall(function()
+
+					CamShake:ShakeOnce(
+						CAMERA_SHAKE_MAGNITUDE,
+						CAMERA_SHAKE_ROUGHNESS,
+						CAMERA_SHAKE_FADE_IN,
+						CAMERA_SHAKE_FADE_OUT
+					)
+
+				end)
+
+			end
+
+		end
+
+		task.wait(
+			CAMERA_SHAKE_INTERVAL
+		)
+
+	end
+
+end)
+
+--==============================================================
+-- LOOK DETECTION
+--==============================================================
+
+task.spawn(function()
+
+	while Figure
+		and Figure.Parent
+		and not Despawned do
+
+		local Camera =
+			Workspace.CurrentCamera
+
+		if Camera then
+
+			local Origin =
+				Camera.CFrame.Position
+
+			local Direction =
+				Figure:GetPivot().Position
+				-
+				Origin
+
+			if Direction.Magnitude > 0 then
+
+				local RayParams =
+					RaycastParams.new()
+
+				RayParams.FilterType =
+					Enum.RaycastFilterType.Exclude
+
+				RayParams.FilterDescendantsInstances = {
+					Character
+				}
+
+				local Result =
+					Workspace:Raycast(
+						Origin,
+						Direction,
+						RayParams
+					)
+
+				local Looking =
+					Result
+					and Result.Instance
+					and Result.Instance:IsDescendantOf(
+						Figure
+					)
+					or false
+
+				if Looking ~= LastLookAt then
+
+					LastLookAt =
+						Looking
+
+					FireCallback(
+						"OnLookAt",
+						Looking
+					)
+
+				end
+
+			end
+
+		end
+
+		RunService.Heartbeat:Wait()
+
+	end
+
+end)
+
+--==============================================================
+-- LIGHTS
+--==============================================================
+
+local function GetLights(room)
+
+	local lights = {}
+
+	for _, object in ipairs(
+		room:GetDescendants()
+	) do
+
+		if object:IsA("PointLight")
+			or object:IsA("SpotLight")
+			or object:IsA("SurfaceLight") then
+
+			table.insert(
+				lights,
+				object
+			)
+
+		end
+
+	end
+
+	return lights
+
+end
+
+local function FlickerLights(room)
+
+	if not FLICKER_LIGHTS then
+		return
+	end
+
+	local lights =
+		GetLights(room)
+
+	local original = {}
+
+	for _, light in ipairs(lights) do
+
+		original[light] =
+			light.Enabled
+
+	end
+
+	local startTime =
+		time()
+
+	while
+		time() - startTime
+		<
+		FLICKER_DURATION
+	do
+
+		for _, light in ipairs(lights) do
+
+			if light
+				and light.Parent then
+
+				light.Enabled =
+					math.random(
+						1,
+						2
+					)
+					==
+					1
+
+			end
+
+		end
+
+		task.wait(
+			FLICKER_SPEED
+		)
+
+	end
+
+	for _, light in ipairs(lights) do
+
+		if light
+			and light.Parent then
+
+			light.Enabled =
+				original[light]
+
+		end
+
+	end
+
+end
+
+task.spawn(function()
+
+	FlickerLights(
+		CurrentRoom
+	)
+
+end)
+
+--==============================================================
+-- BUILD TARGETS
+--==============================================================
+
+local Targets = {}
+
+if SPAWN_IN_FRONT then
+
+	for i =
+		SpawnIndex,
+		CurrentIndex,
+		-1
+	do
+
+		local nodes =
+			GetNodes(
+				Rooms[i]
+			)
+
+		for _, node in ipairs(nodes) do
+
+			table.insert(
+				Targets,
+				node
+			)
+
+		end
+
+	end
+
+else
+
+	for i =
+		SpawnIndex,
+		CurrentIndex
+	do
+
+		local nodes =
+			GetNodes(
+				Rooms[i]
+			)
+
+		for _, node in ipairs(nodes) do
+
+			table.insert(
+				Targets,
+				node
+			)
+
+		end
+
+	end
+
+end
+
+print(
+	"[ENTITY] Target nodes:",
+	#Targets
+)
+
+--==============================================================
+-- ROOM CALLBACK
+--==============================================================
+
+local function CheckRoomCallback(node)
+
+	if not node then
+		return
+	end
+
+	local room =
+		node:FindFirstAncestorWhichIsA(
+			"Model"
+		)
+
+	if not room then
+		return
+	end
+
+	if not room:FindFirstChild(
+		"Nodes"
+	) then
+		return
+	end
+
+	if LastRoom ~= room then
+
+		local firstTime =
+			LastRoom == nil
+
+		LastRoom =
+			room
+
+		FireCallback(
+			"OnEnterRoom",
+			room,
+			firstTime
+		)
+
+	end
+
+end
+
+--==============================================================
+-- JUMPSCARE
+--==============================================================
+
+local function DoJumpscare()
+
+	if not JUMPSCARE_ENABLED then
+		return
+	end
+
+	if JumpscareTriggered then
+		return
+	end
+
+	JumpscareTriggered = true
+
+	local Camera =
+		Workspace.CurrentCamera
+
+	if not Camera then
+		return
+	end
+
+	local ScreenGui =
+		Instance.new("ScreenGui")
+
+	ScreenGui.Name =
+		"FunnyJumpscare"
+
+	ScreenGui.IgnoreGuiInset = true
+	ScreenGui.ResetOnSpawn = false
+	ScreenGui.DisplayOrder = 999999
+	ScreenGui.Parent = PlayerGui
+
+	local Background =
+		Instance.new("ImageLabel")
+
+	Background.Size =
+		UDim2.new(1, 0, 1, 0)
+
+	Background.BackgroundColor3 =
+		Color3.new(0, 0, 0)
+
+	Background.BackgroundTransparency = 0
+	Background.BorderSizePixel = 0
+	Background.Image =
+		JUMPSCARE_BACKGROUND
+
+	Background.Parent =
+		ScreenGui
+
+	local Face =
+		Instance.new("ImageLabel")
+
+	Face.AnchorPoint =
+		Vector2.new(0.5, 0.5)
+
+	Face.Position =
+		UDim2.new(0.5, 0, 0.5, 0)
+
+	Face.Size =
+		UDim2.new(0, 50, 0, 50)
+
+	Face.BackgroundTransparency = 1
+	Face.Image =
+		JUMPSCARE_FACE
+
+	Face.Parent =
+		ScreenGui
+
+	local Sound =
+		Instance.new("Sound")
+
+	Sound.Name =
+		"FunnyJumpscareSound"
+
+	Sound.SoundId =
+		JUMPSCARE_SOUND
+
+	Sound.Volume = 10
+	Sound.Parent =
+		Workspace
+
+	local OriginalFOV =
+		Camera.FieldOfView
+
+	local OriginalCameraType =
+		Camera.CameraType
+
+	Camera.CameraType =
+		Enum.CameraType.Scriptable
+
+	Sound:Play()
+
+	TweenService:Create(
+		Face,
+		TweenInfo.new(
+			0.25,
+			Enum.EasingStyle.Back,
+			Enum.EasingDirection.Out
+		),
+		{
+			Size =
+				UDim2.new(
+					0,
+					1400,
+					0,
+					1400
+				)
+		}
+	):Play()
+
+	TweenService:Create(
+		Camera,
+		TweenInfo.new(0.2),
+		{
+			FieldOfView = 25
+		}
+	):Play()
+
+	task.spawn(function()
+
+		local start =
+			time()
+
+		while
+			time() - start
+			<
+			KILL_DELAY
+		do
+
+			if not Face.Parent then
+				break
+			end
+
+			Face.Position =
+				UDim2.new(
+					0.5,
+					math.random(-80, 80),
+					0.5,
+					math.random(-80, 80)
+				)
+
+			Face.Rotation =
+				math.random(
+					-25,
+					25
+				)
+
+			task.wait(0.04)
+
+		end
+
+	end)
+
+	task.wait(
+		KILL_DELAY
+	)
+
+	Sound:Stop()
+	Sound:Destroy()
+
+	if Camera
+		and Camera.Parent then
+
+		Camera.FieldOfView =
+			OriginalFOV
+
+		Camera.CameraType =
+			OriginalCameraType
+
+	end
+
+	ScreenGui:Destroy()
+
+end
+
+--==============================================================
+-- DISTANCE KILL
+--==============================================================
+
+task.spawn(function()
+
+	while Figure
+		and Figure.Parent
+		and not KillTriggered
+	do
+
+		if HRP
+			and HRP.Parent then
+
+			local distance =
+				(
+					Figure:GetPivot().Position
+					-
+					HRP.Position
+				).Magnitude
+
+			if distance
+				<= KILL_DISTANCE then
+
+				KillTriggered = true
+
+				local Humanoid =
+					Character:FindFirstChildOfClass(
+						"Humanoid"
+					)
+
+				local NewHealth = 0
+
+				if Humanoid then
+
+					NewHealth =
+						math.max(
+							Humanoid.Health
+							-
+							DAMAGE_AMOUNT,
+							0
+						)
+
+				end
+
+				FireCallback(
+					"OnDamagePlayer",
+					NewHealth
+				)
+
+				DoJumpscare()
+
+				if Humanoid then
+					Humanoid.Health = 0
+				end
+
+				break
+
+			end
+
+		end
+
+		RunService.Heartbeat:Wait()
+
+	end
+
+end)
+
+--==============================================================
+-- MOVE TO NODE
+--==============================================================
+
+local function MoveToNode(target)
+
+	if not target
+		or not target.Parent then
+
+		return true
+
+	end
+
+	local StartPivot =
+		Figure:GetPivot()
+
+	local TargetPosition =
+		target.Position
+		+
+		MOVEMENT_OFFSET
+
+	local distance =
+		(
+			StartPivot.Position
+			-
+			TargetPosition
+		).Magnitude
+
+	local TravelTime =
+		math.max(
+			distance / SPEED,
+			0.03
+		)
+
+	local startTime =
+		time()
+
+	while true do
+
+		if not Figure
+			or not Figure.Parent then
+
+			return false
+
+		end
+
+		if KillTriggered then
+			return false
+		end
+
+		local Alpha =
+			math.clamp(
+				(
+					time()
+					-
+					startTime
+				)
+				/
+				TravelTime,
+				0,
+				1
+			)
+
+		local Position =
+			StartPivot.Position:Lerp(
+				TargetPosition,
+				Alpha
+			)
+
+		Figure:PivotTo(
+			CFrame.new(
+				Position
+			)
+			*
+			StartPivot.Rotation
+		)
+
+		if Alpha >= 1 then
+			break
+		end
+
+		RunService.Heartbeat:Wait()
+
+	end
+
+	CheckRoomCallback(
+		target
+	)
+
+	return true
+
+end
+
+--==============================================================
+-- MOVE THROUGH TARGETS
+--==============================================================
+
+local function MoveThroughTargets(list)
+
+	for _, target in ipairs(list) do
+
+		if KillTriggered then
+			return false
+		end
+
+		if not MoveToNode(target) then
+			return false
+		end
+
+	end
+
+	return true
+
+end
+
+--==============================================================
+-- WAIT
+--==============================================================
+
+task.wait(
+	ENTITY_WAIT_TIME
+)
+
+if not Figure
+	or not Figure.Parent then
+
+	return
+
+end
+
+--==============================================================
+-- START MOVING
+--==============================================================
+
+if not StartedMoving then
+
+	StartedMoving = true
+
+	FireCallback(
+		"OnStartMoving",
+		Figure
+	)
+
+end
+
+--==============================================================
+-- FIRST PASS
+--==============================================================
+
+local Completed =
+	MoveThroughTargets(
+		Targets
+	)
+
+--==============================================================
+-- REBOUNDS
+--==============================================================
+
+if Completed
+	and not KillTriggered
+	and REBOUNDS > 0 then
+
+	for rebound = 1, REBOUNDS do
+
+		if KillTriggered then
+			break
+		end
+
+		task.wait(
+			REBOUND_DELAY
+		)
+
+		FireCallback(
+			"OnRebounding",
+			true
+		)
+
+		local ReverseTargets = {}
+
+		for i =
+			#Targets,
+			1,
+			-1
+		do
+
+			table.insert(
+				ReverseTargets,
+				Targets[i]
+			)
+
+		end
+
+		local ReverseCompleted =
+			MoveThroughTargets(
+				ReverseTargets
+			)
+
+		FireCallback(
+			"OnRebounding",
+			false
+		)
+
+		if not ReverseCompleted then
+			break
+		end
+
+		if rebound < REBOUNDS then
+
+			task.wait(
+				REBOUND_DELAY
+			)
+
+			local ForwardCompleted =
+				MoveThroughTargets(
+					Targets
+				)
+
+			if not ForwardCompleted then
+				break
+			end
+
+		end
+
+	end
+
+end
+
+--==============================================================
+-- DESPAWN
+--==============================================================
+
+if Figure
+	and Figure.Parent
+	and not Despawning then
+
+	Despawning = true
+
+	FireCallback(
+		"OnDespawning",
+		Figure
+	)
+
+end
+
+--==============================================================
+-- UNANCHOR
+--==============================================================
+
+if Figure
+	and Figure.Parent then
+
+	for _, part in ipairs(
+		Figure:GetDescendants()
+	) do
+
+		if part:IsA("BasePart") then
+
+			part.Anchored = false
+			part.CanCollide = false
+			part.CanTouch = false
+			part.CanQuery = false
+
+			local Slammed =
+				part:FindFirstChild(
+					"Slammed"
+				)
+
+			if Slammed
+				and Slammed:IsA("Sound") then
+
+				pcall(function()
+					Slammed:Play()
+				end)
+
+			end
+
+		end
+
+	end
+
+end
+
+--==============================================================
+-- DESPAWN CALLBACK
+--==============================================================
+
+if Figure
+	and Figure.Parent
+	and not Despawned then
+
+	Despawned = true
+
+	FireCallback(
+		"OnDespawned",
+		Figure
+	)
+
+  wait(10)
+
+  Figure:Destroy()
+
+end
+
+--==============================================================
+-- COMPLETE
+--==============================================================
+
+print("========================================")
+print("[ENTITY] ENTITY COMPLETE")
+print("Name:", ENTITY_NAME)
+print("Spawn Room:", SpawnRoom.Name)
+print("Current Room:", CurrentRoom.Name)
+print("Spawn Offset:", SPAWN_OFFSET)
+print("Speed:", SPEED)
+print("Targets:", #Targets)
+print("========================================")
