@@ -1,0 +1,87 @@
+local Players = game:GetService("Players")
+local SoundService = game:GetService("SoundService")
+local RunService = game:GetService("RunService")
+local R = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+
+local ScreenGui = Instance.new("ScreenGui")
+local ImageLabel = Instance.new("ImageLabel")
+
+local dont = Instance.new("Sound", workspace)
+dont.Name = "YourDoomed"
+dont.SoundId = "rbxassetid://9120425687"
+dont.PlaybackSpeed = 0.6
+dont.Volume = 6
+dont:Play()
+
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+ImageLabel.Parent = ScreenGui
+ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ImageLabel.BorderSizePixel = 0
+ImageLabel.Size = UDim2.new(1, 0, 1, 0)
+ImageLabel.Image = "rbxassetid://13362464118"
+ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Muffle ALL audio
+local muffler = Instance.new("EqualizerSoundEffect")
+muffler.Name = "MovementMuffler"
+muffler.LowGain = 0
+muffler.MidGain = -80
+muffler.HighGain = -80
+muffler.Enabled = false
+muffler.Parent = game.SoundService
+
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+
+local startPosition = root.Position
+local triggered = false
+
+local connection
+connection = RunService.Heartbeat:Connect(function()
+	if triggered then
+		return
+	end
+
+	-- Detect actual movement
+	local distance = (root.Position - startPosition).Magnitude
+
+	if distance > 0.5 then
+		triggered = true
+
+		-- Muffle everything
+		muffler.Enabled = true
+
+		-- Kill player
+
+        wait((1))
+
+        
+         humanoid.Health = 0
+
+		connection:Disconnect()
+
+        R.GameStats["Player_" .. player.Name].Total.DeathCause.Value = "Admiration"
+	end
+end)
+
+wait((1.5))
+
+
+if connection then
+	connection:Disconnect()
+end
+
+if muffler then
+	muffler:Destroy()
+end
+
+if ScreenGui then
+	ScreenGui:Destroy()
+end
+
+dont:Destroy()
