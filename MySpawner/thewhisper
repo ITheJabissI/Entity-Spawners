@@ -23,7 +23,7 @@ local ENTITY_NAME = "WhisperNew"
 
 local SPEED = 14
 
-local MOVEMENT_OFFSET = Vector3.new(0, 3, 0)
+local MOVEMENT_OFFSET = Vector3.new(0, 3.76, 0)
 
 --==============================================================
 -- SPAWN SETTINGS
@@ -31,7 +31,7 @@ local MOVEMENT_OFFSET = Vector3.new(0, 3, 0)
 
 local SPAWN_IN_FRONT = false
 local SPAWN_ROOMS_DISTANCE = 25
-local SPAWN_OFFSET = Vector3.new(0, 3, 0)
+local SPAWN_OFFSET = Vector3.new(0, 3.76, 0)
 
 --==============================================================
 -- MOVEMENT SETTINGS
