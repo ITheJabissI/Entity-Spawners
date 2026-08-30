@@ -21,7 +21,7 @@ local InsertService = game:GetService("InsertService")
 local ENTITY_ASSET = "https://github.com/ITheJabissI/Entity-Spawners/raw/main/MySpawner/WhisperMoving.rbxm"
 local ENTITY_NAME = "WhisperNew"
 
-local SPEED = 14
+local SPEED = 23
 
 local MOVEMENT_OFFSET = Vector3.new(0, 3.76, 0)
 
@@ -47,7 +47,7 @@ local STOP_DISTANCE = 0
 local PLAYER_MOVE_KILL = true
 
 -- How much the player can move before being considered moving
-local PLAYER_MOVE_TOLERANCE = 1
+local PLAYER_MOVE_TOLERANCE = 0.05
 
 --==============================================================
 -- REBOUND SETTINGS
