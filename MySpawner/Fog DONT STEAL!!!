@@ -1,0 +1,17 @@
+local Lighting = game:GetService("Lighting")
+Lighting.Ambient = Color3.new(0, 0, 0)
+Lighting.Brightness = 0.1
+Lighting.FogEnd = 60
+Lighting.FogStart = 45
+Lighting.FogColor = Color3.new(0.0862745, 0.0862745, 0.0862745)
+
+local cue2 = Instance.new("Sound")
+cue2.Parent = game.Workspace
+cue2.Name = "Ambience"
+cue2.SoundId = "rbxassetid://9113731836"
+cue2.Volume = 3
+cue2.PlaybackSpeed = 1
+cue2.Looped = true
+cue2:Play()
+
+game:GetService("SoundService").AmbientReverb = Enum.ReverbType.Forest
