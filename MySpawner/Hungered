@@ -196,9 +196,6 @@ SetCallback("OnSpawned", function(entity)
 	-- Play the noise
 	cue:Play()
 
-	local cue = Instance.new("ReverbSoundEffect", cue)
-
-
 end)
 
 SetCallback("OnStartMoving", function(entity)
