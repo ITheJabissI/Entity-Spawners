@@ -14,4 +14,4 @@ cue2.PlaybackSpeed = 1
 cue2.Looped = true
 cue2:Play()
 
-game:GetService("SoundService").AmbientReverb = Enum.ReverbType.Forest
+game:GetService("SoundService").AmbientReverb = Enum.ReverbType.Cave
