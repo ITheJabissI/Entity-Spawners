@@ -22,7 +22,7 @@ local InsertService = game:GetService("InsertService")
 local ENTITY_ASSET = "rbxassetid://11652567875"
 local ENTITY_NAME = "Ambush"
 
-local SPEED = 250
+local SPEED = 190
 
 -- Movement offset from each node
 local MOVEMENT_OFFSET = Vector3.new(0, 4, 0)
